@@ -19,7 +19,7 @@ int main(void)
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "PLATFORM FIGHTERS!");
 
     // Create Players
-    Player players[] = {
+    Player players[2] = {
         {{208, 440, 64, 128}, RED}, // Player 1
         {{528, 440, 64, 128}, BLUE} // Player 2
     };

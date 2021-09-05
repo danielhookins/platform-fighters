@@ -29,6 +29,6 @@ Follow the instructions on the [RayLib Wiki](https://github.com/raysan5/raylib/w
 
 ## Build
 Compile with GCC on Windows  
-`gcc main.c -o build/platform-fighers-dev.exe -O1 -Wall -std=c99 -Wno-missing-braces -I include/ -L lib/ -lraylib -lopengl32 -lgdi32 -lwinmm`
+`gcc src/main.c -o build/platform-fighers-dev.exe -O1 -Wall -std=c99 -Wno-missing-braces -I src/include/ -L src/lib/ -lraylib -lopengl32 -lgdi32 -lwinmm`
 
 - Still need to add a proper Make file.
