@@ -4,6 +4,7 @@
 #define SCREEN_HEIGHT 600
 
 #define PLAYER_MOVE_SPEED 200.0f
+#define GRAVITY -500
 
 typedef enum {
     PLAYER_LEFT = 0, // Uses WSAD and Space
@@ -102,6 +103,9 @@ void UpdatePlayer(Player *player, float deltaTime)
         if (IsKeyDown(KEY_LEFT)) MovePlayer(player, deltaTime, MOVE_LEFT);
         if (IsKeyDown(KEY_RIGHT)) MovePlayer(player, deltaTime, MOVE_RIGHT);
     }
+
+    // Apply Gravity
+    player->position.y = player->position.y - GRAVITY * deltaTime;
 }
 
 void MovePlayer(Player *player, float deltaTime, Direction direction)
