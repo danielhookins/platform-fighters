@@ -3,8 +3,22 @@
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 
+#define PLAYER_MOVE_SPEED 200.0f
+
+typedef enum {
+    PLAYER_LEFT = 0, // Uses WSAD and Space
+    PLAYER_RIGHT = 1 // Uses Arrow Keys and Enter
+} Controls;
+
+typedef enum {
+    MOVE_LEFT = 0,
+    MOVE_RIGHT = 1,
+    JUMP = 2
+} Direction;
+
 typedef struct Player {
-    Rectangle rect;
+    Vector2 position;
+    Controls controls;
     Color color;
 } Player;
 
@@ -13,6 +27,10 @@ typedef struct Platform {
     Color color;
 } Platform;
 
+void UpdatePlayer(Player *player, float deltaTime);
+void MovePlayer(Player *player, float deltaTime, Direction direction);
+void DrawPlayer(Player *player);
+
 int main(void)
 {
     // Init
@@ -20,8 +38,8 @@ int main(void)
 
     // Create Players
     Player players[2] = {
-        {{208, 440, 64, 128}, RED}, // Player 1
-        {{528, 440, 64, 128}, BLUE} // Player 2
+        {(Vector2){208, 440}, PLAYER_LEFT, RED}, // Player 1
+        {(Vector2){528, 440}, PLAYER_RIGHT, BLUE} // Player 2
     };
 
     int playersLength = sizeof(players) / sizeof(players[0]);
@@ -43,8 +61,12 @@ int main(void)
     while (!WindowShouldClose())
     {
         // Update
+        float deltaTime = GetFrameTime();
 
-
+        for (int i=0; i<playersLength; i++) {
+            UpdatePlayer(&players[i], deltaTime);
+        }
+        
         // Draw
         BeginDrawing();
             ClearBackground(SKYBLUE);
@@ -56,7 +78,7 @@ int main(void)
 
             // Draw Players
             for (int i=0; i < playersLength; i++) {
-                DrawRectangleRec(players[i].rect, players[i].color);
+                DrawPlayer(&players[i]);
             }
 
         EndDrawing();
@@ -66,4 +88,30 @@ int main(void)
     CloseWindow();
 
     return 0;
+}
+
+void UpdatePlayer(Player *player, float deltaTime)
+{
+    // Left Player (Player 1)
+    if (player->controls == PLAYER_LEFT) {
+        if (IsKeyDown(KEY_A)) MovePlayer(player, deltaTime, MOVE_LEFT);
+        if (IsKeyDown(KEY_D)) MovePlayer(player, deltaTime, MOVE_RIGHT);
+    }
+    // Right Player (Player 2)
+    else if (player->controls == PLAYER_RIGHT) {
+        if (IsKeyDown(KEY_LEFT)) MovePlayer(player, deltaTime, MOVE_LEFT);
+        if (IsKeyDown(KEY_RIGHT)) MovePlayer(player, deltaTime, MOVE_RIGHT);
+    }
+}
+
+void MovePlayer(Player *player, float deltaTime, Direction direction)
+{
+    if (direction == MOVE_LEFT) {player->position.x -= PLAYER_MOVE_SPEED * deltaTime;}
+    if (direction == MOVE_RIGHT) {player->position.x += PLAYER_MOVE_SPEED * deltaTime;}
+}
+
+void DrawPlayer(Player *player) 
+{
+    Rectangle playerRect = {player->position.x, player->position.y, 64, 128};
+    DrawRectangleRec(playerRect, player->color);
 }
