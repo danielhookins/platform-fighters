@@ -1,10 +1,11 @@
+#include <stdio.h>
 #include "raylib.h"
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 
 #define PLAYER_MOVE_SPEED 200.0f
-#define GRAVITY -500
+#define GRAVITY 500
 
 typedef enum {
     PLAYER_LEFT = 0, // Uses WSAD and Space
@@ -19,6 +20,7 @@ typedef enum {
 
 typedef struct Player {
     Vector2 position;
+    Vector2 velocity;
     Controls controls;
     Color color;
 } Player;
@@ -28,7 +30,7 @@ typedef struct Platform {
     Color color;
 } Platform;
 
-void UpdatePlayer(Player *player, float deltaTime);
+void UpdatePlayer(Player *player, Platform *patforms, int platformsLength, float deltaTime);
 void MovePlayer(Player *player, float deltaTime, Direction direction);
 void DrawPlayer(Player *player);
 
@@ -39,8 +41,8 @@ int main(void)
 
     // Create Players
     Player players[2] = {
-        {(Vector2){208, 440}, PLAYER_LEFT, RED}, // Player 1
-        {(Vector2){528, 440}, PLAYER_RIGHT, BLUE} // Player 2
+        {(Vector2){240, 0}, {0}, PLAYER_LEFT, RED}, // Player 1
+        {(Vector2){528, 0}, {0}, PLAYER_RIGHT, BLUE} // Player 2
     };
 
     int playersLength = sizeof(players) / sizeof(players[0]);
@@ -65,7 +67,7 @@ int main(void)
         float deltaTime = GetFrameTime();
 
         for (int i=0; i<playersLength; i++) {
-            UpdatePlayer(&players[i], deltaTime);
+            UpdatePlayer(&players[i], platforms, platformsLength, deltaTime);
         }
         
         // Draw
@@ -91,7 +93,7 @@ int main(void)
     return 0;
 }
 
-void UpdatePlayer(Player *player, float deltaTime)
+void UpdatePlayer(Player *player, Platform *platforms, int platformsLength, float deltaTime)
 {
     // Left Player (Player 1)
     if (player->controls == PLAYER_LEFT) {
@@ -104,8 +106,29 @@ void UpdatePlayer(Player *player, float deltaTime)
         if (IsKeyDown(KEY_RIGHT)) MovePlayer(player, deltaTime, MOVE_RIGHT);
     }
 
-    // Apply Gravity
-    player->position.y = player->position.y - GRAVITY * deltaTime;
+    // Check Collisions
+    int hitObstacle = 0;
+    for (int i=0; i<platformsLength; i++)
+    {
+        Platform *pi = platforms + i;
+        Vector2 *p = &(player->position);
+        
+        if (pi->rect.x <= p->x &&
+            pi->rect.x + pi->rect.width >= p->x &&
+            pi->rect.y >= p->y &&
+            pi->rect.y < p->y + player->velocity.y * deltaTime
+        ) {
+            hitObstacle = 1;
+            player->velocity = (Vector2){0, 0};
+            p->y = pi->rect.y;
+        }
+    }
+
+    if (!hitObstacle) {
+        // Apply Gravity
+        player->position.y += player->velocity.y * deltaTime;
+        player->velocity.y += GRAVITY * deltaTime;
+    }   
 }
 
 void MovePlayer(Player *player, float deltaTime, Direction direction)
@@ -116,6 +139,6 @@ void MovePlayer(Player *player, float deltaTime, Direction direction)
 
 void DrawPlayer(Player *player) 
 {
-    Rectangle playerRect = {player->position.x, player->position.y, 64, 128};
+    Rectangle playerRect = {player->position.x - 64, player->position.y - 116, 64, 128};
     DrawRectangleRec(playerRect, player->color);
 }
