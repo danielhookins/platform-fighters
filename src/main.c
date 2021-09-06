@@ -5,7 +5,8 @@
 #define SCREEN_HEIGHT 600
 
 #define PLAYER_MOVE_SPEED 200.0f
-#define GRAVITY 500
+#define PLAYER_JUMP_SPEED 500.0f
+#define GRAVITY 800
 
 typedef enum {
     PLAYER_LEFT = 0, // Uses WSAD and Space
@@ -23,6 +24,7 @@ typedef struct Player {
     Vector2 velocity;
     Controls controls;
     Color color;
+    int jump;
 } Player;
 
 typedef struct Platform {
@@ -41,8 +43,8 @@ int main(void)
 
     // Create Players
     Player players[2] = {
-        {(Vector2){240, 0}, {0}, PLAYER_LEFT, RED}, // Player 1
-        {(Vector2){528, 0}, {0}, PLAYER_RIGHT, BLUE} // Player 2
+        {(Vector2){240, 0}, {0}, PLAYER_LEFT, RED, 0}, // Player 1
+        {(Vector2){528, 0}, {0}, PLAYER_RIGHT, BLUE, 0} // Player 2
     };
 
     int playersLength = sizeof(players) / sizeof(players[0]);
@@ -99,11 +101,13 @@ void UpdatePlayer(Player *player, Platform *platforms, int platformsLength, floa
     if (player->controls == PLAYER_LEFT) {
         if (IsKeyDown(KEY_A)) MovePlayer(player, deltaTime, MOVE_LEFT);
         if (IsKeyDown(KEY_D)) MovePlayer(player, deltaTime, MOVE_RIGHT);
+        if (IsKeyDown(KEY_W)) MovePlayer(player, deltaTime, JUMP);
     }
     // Right Player (Player 2)
     else if (player->controls == PLAYER_RIGHT) {
         if (IsKeyDown(KEY_LEFT)) MovePlayer(player, deltaTime, MOVE_LEFT);
         if (IsKeyDown(KEY_RIGHT)) MovePlayer(player, deltaTime, MOVE_RIGHT);
+        if (IsKeyDown(KEY_UP)) MovePlayer(player, deltaTime, JUMP);
     }
 
     // Check Collisions
@@ -128,13 +132,20 @@ void UpdatePlayer(Player *player, Platform *platforms, int platformsLength, floa
         // Apply Gravity
         player->position.y += player->velocity.y * deltaTime;
         player->velocity.y += GRAVITY * deltaTime;
-    }   
+    }
+    else {
+        player->jump = 0;
+    } 
 }
 
 void MovePlayer(Player *player, float deltaTime, Direction direction)
 {
     if (direction == MOVE_LEFT) {player->position.x -= PLAYER_MOVE_SPEED * deltaTime;}
     if (direction == MOVE_RIGHT) {player->position.x += PLAYER_MOVE_SPEED * deltaTime;}
+    if (direction == JUMP && player->jump <= 10) {
+        player->velocity.y = -PLAYER_JUMP_SPEED;
+        ++player->jump;
+    }
 }
 
 void DrawPlayer(Player *player) 
