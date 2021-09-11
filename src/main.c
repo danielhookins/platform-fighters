@@ -6,7 +6,7 @@
 
 #define PLAYER_MOVE_SPEED 300
 #define PLAYER_JUMP_SPEED 500
-#define GRAVITY 500
+#define GRAVITY 600
 
 typedef enum {
     PLAYER_LEFT = 0, // Uses WSAD and Space
@@ -19,6 +19,14 @@ typedef enum {
     JUMP = 2
 } Direction;
 
+typedef enum {
+    IDLE_LEFT,
+    IDLE_RIGHT,
+    MOVING_LEFT,
+    MOVING_RIGHT,
+    JUMPING
+} PlayerState;
+
 typedef struct Player {
     Vector2 position;
     int width;
@@ -26,7 +34,9 @@ typedef struct Player {
     float velocity;
     Controls controls;
     Color color;
+    Texture2D texture;
     int jump;
+    PlayerState state;
 } Player;
 
 typedef struct Platform {
@@ -41,13 +51,40 @@ void DrawPlayer(Player *player);
 
 int main(void)
 {
+    printf("working dir\n");
+    printf(GetWorkingDirectory());
+    
     // Init
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "PLATFORM FIGHTERS!");
 
+    // Load Textures
+    Texture2D texPlayerA = LoadTexture("src/resources/fighter-a-spritesheet.png");
+    Texture2D texPlayerB = LoadTexture("src/resources/fighter-a-spritesheet.png");
+
     // Create Players
     Player players[2] = {
-        {(Vector2){240, 500}, 64, 128, 0, PLAYER_LEFT, RED, 0}, // Player 1
-        {(Vector2){528, 500}, 64, 128, 0, PLAYER_RIGHT, BLUE, 0} // Player 2
+        // Player 1
+        {
+            (Vector2){240, 500},
+            36,
+            128, 
+            0,
+            PLAYER_LEFT,
+            RED,
+            texPlayerA,
+            0,
+            IDLE_RIGHT}, 
+        // Player 2
+        {
+            (Vector2){528, 500},
+            36,
+            128,
+            0,
+            PLAYER_RIGHT,
+            BLUE,
+            texPlayerB,
+            0,
+            IDLE_LEFT}
     };
 
     int playersLength = sizeof(players) / sizeof(players[0]);
@@ -93,6 +130,8 @@ int main(void)
     }
 
     // De-Init
+    UnloadTexture(texPlayerA);
+    UnloadTexture(texPlayerB);
     CloseWindow();
 
     return 0;
@@ -132,7 +171,7 @@ bool CheckPlatformCollision(Player *player, Platform *platforms, int platformsLe
         Platform *pi = platforms + i;
         if (
             pi->rect.x <= p->x &&
-            pi->rect.x + pi->rect.width + player->width >= p->x &&  
+            pi->rect.x + pi->rect.width >= p->x &&  
             pi->rect.y >= p->y &&
             pi->rect.y < p->y + player->velocity * deltaTime
         ) {
@@ -147,8 +186,14 @@ bool CheckPlatformCollision(Player *player, Platform *platforms, int platformsLe
 
 void MovePlayer(Player *player, float deltaTime, Direction direction)
 {
-    if (direction == MOVE_LEFT) {player->position.x -= PLAYER_MOVE_SPEED * deltaTime;}
-    if (direction == MOVE_RIGHT) {player->position.x += PLAYER_MOVE_SPEED * deltaTime;}
+    if (direction == MOVE_LEFT) {
+        player->position.x -= PLAYER_MOVE_SPEED * deltaTime;
+        player->state = MOVING_LEFT;
+    }
+    if (direction == MOVE_RIGHT) {
+        player->position.x += PLAYER_MOVE_SPEED * deltaTime;
+        player->state = MOVING_RIGHT;
+    }
     if (direction == JUMP && player->jump <= 1) {
         player->velocity = -PLAYER_JUMP_SPEED;
         player->jump++;
@@ -157,10 +202,28 @@ void MovePlayer(Player *player, float deltaTime, Direction direction)
 
 void DrawPlayer(Player *player) 
 {
-    Rectangle playerRect = {
-        player->position.x - player->width,
-        player->position.y - player->height,
-        player->width,
-        player->height};
-    DrawRectangleRec(playerRect, player->color);
+    Rectangle sourceRect = {
+        0.f,
+        0.f,
+        64,
+        128};    
+    
+    Rectangle destRect = {
+        player->position.x - 30, 
+        player->position.y - (player->height * 0.94),
+        64,
+        128};
+    
+    // Check Player State
+    if (player->state == IDLE_LEFT || player->state == MOVING_LEFT) {
+        sourceRect.width = -sourceRect.width;
+    }
+
+    DrawTexturePro(
+        player->texture, 
+        sourceRect,
+        destRect,
+        (Vector2){0,0},
+        0,
+        player->color);
 }
